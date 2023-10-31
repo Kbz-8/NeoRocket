@@ -119,8 +119,9 @@ vim.cmd([[set showmode]])
 vim.cmd([[set pumheight=50]])
 vim.cmd([[set whichwrap+=<,>,[,]])
 vim.cmd([[let g:load_doxygen_syntax=1]])
-vim.api.nvim_set_keymap('i', '<C-g>', '<esc>:Neotree<CR', {})
-vim.api.nvim_set_keymap('', '<C-g>', '<esc>:Neotree<CR>', {})
+vim.cmd([[set nowrap]])
+vim.api.nvim_set_keymap('i', '<leader>e', '<esc>:Neotree<CR', {})
+vim.api.nvim_set_keymap('', '<leader>e', '<esc>:Neotree<CR>', {})
 
 require 'nvim-treesitter.configs'.setup {
 	ensure_installed = { "c" },
@@ -347,4 +348,21 @@ require("toggleterm").setup()
 
 vim.cmd([[nnoremap <silent><c-t> <Cmd>exe v:count1 . "ToggleTerm"<CR>]])
 vim.cmd([[inoremap <silent><c-t> <Esc><Cmd>exe v:count1 . "ToggleTerm"<CR>]])
-vim.cmd([[let g:instant_username = "Sam"]])
+vim.cmd([[let g:instant_username = "kbz_8"]])
+
+vim.cmd([[inoremap {      {}<Left>]])
+vim.cmd([[inoremap {<CR>  {<CR>}<Esc>O]])
+vim.cmd([[inoremap {{     {]])
+vim.cmd([[inoremap {}     {}]])
+
+vim.cmd([[inoremap        (  ()<Left>]])
+vim.cmd([[inoremap <expr> )  strpart(getline('.'), col('.')-1, 1) == ")" ? "\<Right>" : ")"]])
+
+vim.cmd([[inoremap        [  []<Left>]])
+vim.cmd([[inoremap <expr> ]  strpart(getline('.'), col('.')-1, 1) == "]" ? "\<Right>" : "]"]])
+
+vim.cmd([[inoremap <expr> ' strpart(getline('.'), col('.')-1, 1) == "\'" ? "\<Right>" : "\'\'\<Left>"]])
+vim.cmd([[inoremap <expr> " strpart(getline('.'), col('.')-1, 1) == "\"" ? "\<Right>" : "\"\"\<Left>"]])
+
+vim.cmd([[inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"]])
+vim.cmd([[inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"]])
