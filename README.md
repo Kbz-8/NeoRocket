@@ -25,7 +25,7 @@ mkdir -p ~/.local/share/nvim/site/plugin/
 ```
 
 ```sh
-cp nvim/stdheader.vim ~/.local/share/nvim/site/plugin/
+cp nvim/stdheader.vim nvim/akel_header.vim ~/.local/share/nvim/site/plugin/
 ```
 
 ### In Neovim Run
