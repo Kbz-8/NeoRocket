@@ -120,8 +120,8 @@ vim.cmd([[set pumheight=50]])
 vim.cmd([[set whichwrap+=<,>,[,]])
 vim.cmd([[let g:load_doxygen_syntax=1]])
 vim.cmd([[set nowrap]])
-vim.api.nvim_set_keymap('i', '<leader>e', '<esc>:Neotree<CR', {})
-vim.api.nvim_set_keymap('', '<leader>e', '<esc>:Neotree<CR>', {})
+vim.api.nvim_set_keymap('i', '<C-e>', '<esc>:Neotree<CR', {})
+vim.api.nvim_set_keymap('', '<C-e>', '<esc>:Neotree<CR>', {})
 
 require 'nvim-treesitter.configs'.setup {
 	ensure_installed = { "c" },
@@ -135,10 +135,10 @@ require 'nvim-treesitter.configs'.setup {
 
 
 local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>f', builtin.find_files, {})
-vim.keymap.set('n', '<leader>g', builtin.live_grep, {})
-vim.keymap.set('n', '<leader>b', builtin.buffers, {})
-vim.keymap.set('n', '<leader>h', builtin.help_tags, {})
+vim.keymap.set('n', '<C-f>', builtin.find_files, {})
+vim.keymap.set('n', '<C-g>', builtin.live_grep, {})
+vim.keymap.set('n', '<C-b>', builtin.buffers, {})
+vim.keymap.set('n', '<C-h>', builtin.help_tags, {})
 
 local map = vim.api.nvim_set_keymap
 local opts = { noremap = true, silent = true }

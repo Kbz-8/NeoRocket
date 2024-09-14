@@ -50,9 +50,7 @@ return require('packer').startup(function()
   		requires = {'kyazdani42/nvim-web-devicons'}
 	}
 
-	use { 'nvim-telescope/telescope.nvim', tag = '0.1.0',
-  		requires = { {'nvim-lua/plenary.nvim'} }
-	}
+	use { 'nvim-telescope/telescope.nvim', tag = '0.1.8' }
 
 	use {'akinsho/bufferline.nvim', tag = "v3.*", requires = 'nvim-tree/nvim-web-devicons'}
 
