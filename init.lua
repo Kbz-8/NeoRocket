@@ -32,13 +32,68 @@ require('packer-plugins')
 
 require("mason").setup()
 require("mason-lspconfig").setup({
-	ensure_installed = { "clangd"},
+	ensure_installed = { "clangd", "zls" },
 	automatic_installation = true,
 })
 
 -- Load LSP
 
-require("lspconfig").clangd.setup {}
+local lspconfig = require("lspconfig")
+local util = require("lspconfig.util")
+
+local function has_repo_clang_format(bufnr, client)
+  local filename = vim.api.nvim_buf_get_name(bufnr)
+
+  -- Prefer actual git repo root.
+  local repo_root = util.root_pattern(".git")(filename)
+
+  -- Fallback to clangd's detected root.
+  repo_root = repo_root or client.config.root_dir
+
+  return repo_root
+    and vim.loop.fs_stat(repo_root .. "/.clang-format") ~= nil
+end
+
+local clangd_format_group = vim.api.nvim_create_augroup("ClangdFormatOnSave", {
+  clear = true,
+})
+
+lspconfig.clangd.setup({
+  on_attach = function(client, bufnr)
+    vim.api.nvim_clear_autocmds({
+      group = clangd_format_group,
+      buffer = bufnr,
+    })
+
+    vim.api.nvim_create_autocmd("BufWritePre", {
+      group = clangd_format_group,
+      buffer = bufnr,
+      callback = function()
+        if not has_repo_clang_format(bufnr, client) then
+          return
+        end
+
+        vim.lsp.buf.format({
+          bufnr = bufnr,
+          filter = function(format_client)
+            return format_client.name == "clangd"
+          end,
+        })
+      end,
+    })
+  end,
+})
+
+lspconfig.zls.setup({
+  root_dir = lspconfig.util.root_pattern(".git", "build.zig", "zls.json"),
+  settings = {
+    zls = {
+      enable_inlay_hints = true,
+      enable_snippets = true,
+      warn_style = true,
+    },
+  },
+})
 
 -- Neotree configuration
 
@@ -100,6 +155,12 @@ require("neo-tree").setup({
 	}
 })
 
+local builtin = require('telescope.builtin')
+vim.keymap.set('n', '<C-f>', builtin.find_files, {})
+vim.keymap.set('n', '<C-g>', builtin.live_grep, {})
+vim.keymap.set('n', '<C-b>', builtin.buffers, {})
+vim.keymap.set('n', '<C-h>', builtin.help_tags, {})
+
 vim.cmd([[set mouse=a]])
 vim.cmd([[set guioptions-=r]])
 vim.cmd([[set guioptions-=R]])
@@ -120,8 +181,11 @@ vim.cmd([[set pumheight=50]])
 vim.cmd([[set whichwrap+=<,>,[,]])
 vim.cmd([[let g:load_doxygen_syntax=1]])
 vim.cmd([[set nowrap]])
-vim.api.nvim_set_keymap('i', '<leader>e', '<esc>:Neotree<CR', {})
-vim.api.nvim_set_keymap('', '<leader>e', '<esc>:Neotree<CR>', {})
+vim.cmd([[set list]])
+vim.cmd([[au BufRead,BufNewFile *.nzsl set filetype=rust]])
+vim.cmd([[autocmd BufWritePre * lua vim.lsp.buf.format()]])
+vim.api.nvim_set_keymap('i', '<C-e>', '<esc>:Neotree<CR', {})
+vim.api.nvim_set_keymap('', '<C-e>', '<esc>:Neotree<CR>', {})
 
 require 'nvim-treesitter.configs'.setup {
 	ensure_installed = { "c" },
@@ -132,13 +196,6 @@ require 'nvim-treesitter.configs'.setup {
 		additional_vim_regex_highlighting = false,
 	},
 }
-
-
-local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>f', builtin.find_files, {})
-vim.keymap.set('n', '<leader>g', builtin.live_grep, {})
-vim.keymap.set('n', '<leader>b', builtin.buffers, {})
-vim.keymap.set('n', '<leader>h', builtin.help_tags, {})
 
 local map = vim.api.nvim_set_keymap
 local opts = { noremap = true, silent = true }
@@ -366,3 +423,46 @@ vim.cmd([[inoremap <expr> " strpart(getline('.'), col('.')-1, 1) == "\"" ? "\<Ri
 
 vim.cmd([[inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"]])
 vim.cmd([[inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"]])
+
+vim.cmd([[let g:zig_fmt_autosave = 1]])
+vim.cmd([[let g:zig_fmt_parse_errors = 0]])
+
+local sorter = "zig_fn_sort.py"
+-- Example absolute path:
+-- local sorter = vim.fn.expand("~/.local/bin/zig_fn_sort.py")
+
+local function sort_fns_in_buffer()
+  -- Get whole buffer as a single string
+  local buf = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local input = table.concat(lines, "\n")
+  -- Preserve trailing newline if present in buffer (common)
+  if #lines > 0 and lines[#lines] == "" then
+    input = input .. "\n"
+  end
+
+  -- Run external command, passing buffer via stdin
+  local cmd = sorter
+  local output = vim.fn.system(cmd, input)
+  local code = vim.v.shell_error
+
+  if code ~= 0 then
+    vim.notify(("sortfns failed (exit %d): %s"):format(code, output), vim.log.levels.ERROR)
+    return
+  end
+
+  if output == input then
+    vim.notify("sortfns: no changes", vim.log.levels.INFO)
+    return
+  end
+
+  -- Replace buffer
+  local out_lines = vim.split(output, "\n", { plain = true })
+  -- vim.split keeps a trailing empty element if output ends with '\n'
+  -- which matches how buffer lines work; it's fine to keep it.
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, out_lines)
+
+  vim.notify("sortfns: sorted functions", vim.log.levels.INFO)
+end
+
+vim.api.nvim_create_user_command("SortFns", sort_fns_in_buffer, { desc = "Sort Zig functions by name within each scope" })

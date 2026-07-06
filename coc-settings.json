@@ -1,0 +1,11 @@
+{
+	"snippets.ultisnips.pythonPrompt": false,
+	"inlayHint.enable": false,
+	"rust-analyzer.cachePriming.enable": false,
+	"rust-analyzer.checkOnSave": false,
+	"zig.enabled": true,
+	"zig.startUpMessage": true,
+	"zig.path": "zls",
+	"zig.debugLog": false,
+	"zig.zls.path": "/home/kbz8/.config/coc/extensions/coc-zls-data/zls_install/zls",
+}
